@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>识别字符</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/1.10.0/jquery.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/layer/2.3/layer.js"></script>
+</head>
+<body>
+<a href="cut.html" >切图</a>
+<a href="ocr.html" >识别透明PNG</a>
+<a href="ocrJPG.html" >识别JPG</a>
+<h2>识别jpg图片的英文字符</h2>
+<h3>本地上传</h3>
+<form id="form_table" enctype="multipart/form-data">
+    <input name="file" type="file" id="file"  accept="image/*" capture="camera"/>
+</form>
+<div id="hide" style="display: none">
+    <h3>结果</h3>
+    <div id="result"></div>
+    <h3>图片展示</h3>
+    <div >
+        <p>上传图片</p>
+        <img style="max-width: 300px" id="source" src="">
+    </div>
+    <div >
+        <p>识别结果图片</p>
+        <img style="max-width: 300px" id="target" src="">
+    </div>
+
+</div>
+
+<script>
+    $("#file").on("change", function () {
+        var size = $("#file")[0].files[0].size
+        if(size > 9* 1024 * 1024){
+            alert("图片文件过大，请小于10M，实际大小为："+ (size/1024/1024).toFixed(2)+"M")
+            return
+        }
+        var fd = new FormData($("#form_table")[0]);
+        layer.msg('上传图片并识别中。。');
+        $.ajax({
+            url: '/ocr/ocrJpg',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function (resp) {
+                console.log(resp)
+                $("#hide").show()
+                if (resp.code === 0) {
+                    $("#result").html("")
+
+                    for (let resultKey in resp.result) {
+                        var item = resp.result[resultKey]
+                        $("#result").append($(`<div class="m-single">
+                                            <img src="/resource/output/${resp.id}_output/${item.url}">
+                                            <span>${item.letter}</span>
+                                            </div>
+                                            `))
+                    }
+
+                    $("#source").attr("src","/resource/input/"+resp.id+".png")
+
+                    $("#target").attr("src","/resource/output/"+resp.id+"_output/"+resp.id+".png")
+                }else{
+                    alert(JSON.stringify(resp.msg));
+                }
+            },
+            error: function (data) {
+                alert(data);
+            }
+        });
+    })
+</script>
+</body>
+<style>
+    .m-single{
+        display: inline-block;
+        border: 1px solid black;
+        margin: 5px;
+        padding: 5px;
+    }
+</style>
+</html>
